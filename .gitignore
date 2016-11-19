@@ -1,0 +1,5 @@
+.cproject
+.project
+.settings/
+
+tests/json_test
