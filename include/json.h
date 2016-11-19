@@ -11,6 +11,7 @@
 #include <vector>
 #include <sstream>
 #include <exception>
+#include <fstream>
 
 class Json: public std::vector<Json> {
 public:
@@ -27,8 +28,8 @@ public:
 	std::string name;
 	std::string value;
 
-	struct parsingError: public std::exception {
-		parsingError(std::string info):
+	struct ParsingError: public std::exception {
+		ParsingError(std::string info):
 		errorString(info){
 			what();
 		}
@@ -90,20 +91,77 @@ public:
 	Json(std::string str) {
 		parse(str);
 	}
+	Json(const Json &json) = default;
+	Json(Json &&) = default;
+	Json(std::istream &stream) {
+		parse(stream);
+	}
 
-	Json &operator[] (std::string name) {
-		auto f = find(name);
+	static Json loadFile(std::string fname) {
+		std::ifstream file(fname);
+		return Json(file);
+	}
+
+	Json &operator[] (const char *name) {
+		return operator[] (std::string(name));
+	}
+
+	Json &operator[] (std::string n) {
+		type = Object; //The operation converts the Json-object to a object
+		value = "";
+		this->name = "";
+		auto f = find(n);
 		if (f != end()) {
 			return *f;
 		}
 
 		push_back(Json());
+		back().name = n;
 		return back();
 	}
 
 
 	bool operator==(std::string value) {
 		return this->value == value;
+	}
+
+	Json& operator=(const Json &json) {
+		type = json.type;
+		if (type == Array || type == Object) {
+			value.clear();
+			auto n = name; //The name get cleared for some reason
+			vector() = json.vector();
+			name = n;
+		}
+		else {
+			value = json.value;
+			name = json.name;
+		}
+		return *this;
+	}
+
+	Json& operator=(Json &&json) {
+		type = json.type;
+		if (type == Array || type == Object) {
+			value.clear();
+			auto n = name;
+			vector() = std::move(json.vector());
+			name = n;
+		}
+		else
+			value = std::move(json.value);
+			name = std::move(json.name);{
+		}
+		return *this;
+	}
+
+	std::vector<Json> &vector() {
+		return *((std::vector<Json>*) this);
+	}
+
+
+	std::vector<Json> &vector() const {
+		return *((std::vector<Json>*) this);
 	}
 
 	operator bool() {
@@ -124,9 +182,18 @@ public:
 		return end();
 	}
 
+	iterator remove(const char* name) {
+		remove (std::string(name));
+	}
+
+	iterator remove(std::string name) {
+		auto f = find(name);
+		return vector().erase(f);
+	}
+
 	static char getChar(std::istream &stream) {
 		if (stream.eof()) {
-			throw parsingError("Unexpected end of file");
+			throw ParsingError("Unexpected end of file");
 		}
 		return stream.get();
 	}
@@ -135,13 +202,13 @@ public:
 		Token ret;
 
 		if (stream.eof()) {
-			throw parsingError("End of file when expecting character");
+			throw ParsingError("End of file when expecting character");
 		}
 		char c = getChar(stream);
 		while (isspace(c)) {
 			c = getChar(stream);
 			if (stream.eof()) {
-				throw parsingError("End of file when expecting character");
+				throw ParsingError("End of file when expecting character");
 			}
 		}
 
@@ -171,7 +238,7 @@ public:
 							ret.value += '\f';
 							break;
 						default:
-							throw parsingError("illegal character in string");
+							throw ParsingError("illegal character in string");
 							break;
 					}
 				}
@@ -182,7 +249,10 @@ public:
 			}
 			return ret;
 		}
-		if (isdigit(c) || c == '.') {
+		if (isdigit(c) || c == '.' || c == '-') {
+			ret.value += c;
+			c = getChar(stream);
+
 			while (isdigit(c) || c == '.') {
 				ret.value += c;
 				c = getChar(stream);
@@ -220,7 +290,7 @@ public:
 				return Token(Token::Null);
 			}
 			else {
-				throw parsingError("unexpected token");
+				throw ParsingError("unexpected token");
 			}
 		}
 		else{
@@ -265,19 +335,19 @@ public:
 				token = getNextToken(ss);
 
 				if (token.type != Token::Colon) {
-					throw parsingError("unexpexted token in object, expected ':'");
+					throw ParsingError("unexpexted token in object, expected ':'");
 				}
 
 				token = getNextToken(ss);
 
 				json.parse(ss, token);
 				if (json.type == None) {
-					throw parsingError("error in array");
+					throw ParsingError("error in array");
 				}
 
 				push_back(json);
 
-				auto token = getNextToken(ss);
+				token = getNextToken(ss);
 
 				if (token.type == token.EndBrace) {
 					return; //End of array
@@ -286,7 +356,7 @@ public:
 					token = getNextToken(ss);
 				}
 				else {
-					throw parsingError("unexpected character in array");
+					throw ParsingError("unexpected character in array");
 				}
 			}
 		}
@@ -308,12 +378,12 @@ public:
 
 				json.parse(ss, token);
 				if (json.type == None) {
-					throw parsingError("error in array");
+					throw ParsingError("error in array");
 				}
 
 				push_back(json);
 
-				auto token = getNextToken(ss);
+				token = getNextToken(ss);
 
 				if (token.type == token.EndBracket) {
 					return; //End of array
@@ -322,7 +392,7 @@ public:
 					token = getNextToken(ss);
 				}
 				else {
-					throw parsingError("unexpected character in array");
+					throw ParsingError("unexpected character in array");
 				}
 			}
 		}
@@ -335,7 +405,7 @@ public:
 		}
 	}
 
-	std::string stringify(int indent = 2) {
+	std::string stringify(int indent = 4) {
 		std::ostringstream ss;
 		stringify(ss, indent, 0);
 		return ss.str();
@@ -367,7 +437,7 @@ public:
 		stream << '"';
 	}
 
-	void stringify(std::ostream &stream, int indent = 2, int startIndent = 0) {
+	void stringify(std::ostream &stream, int indent = 4, int startIndent = 0) {
 		if (type == Number) {
 			stream << value;
 		}
@@ -378,6 +448,10 @@ public:
 			stream << "null";
 		}
 		else if (type == Object) {
+			if (empty()) {
+				stream << "{}";
+				return;
+			}
 			stream << "{\n";
 			for (auto &it: *this) {
 				this->indent(stream, (startIndent + 1) * indent);
@@ -390,6 +464,10 @@ public:
 			stream << "}";
 		}
 		else if (type == Array) {
+			if (empty()) {
+				stream << "[]";
+				return;
+			}
 			stream << "[\n";
 			for (auto &it: *this) {
 				this->indent(stream, (startIndent + 1) * indent);
@@ -405,4 +483,11 @@ public:
 		return stringify(2);
 	}
 };
+
+std::ostream& operator << (std::ostream &stream, Json &json) {
+	json.stringify(stream);
+	return stream;
+}
+
+
 

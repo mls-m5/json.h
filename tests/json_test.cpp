@@ -44,6 +44,17 @@ TEST_CASE("dump") {
 	ASSERT_EQ(json.toString(), outputTarget);
 }
 
+TEST_CASE("remove values") {
+	Json json("{\"a\": null, \"b\": null}");
+	ASSERT_EQ(json["a"].type, json.Null);
+
+	ASSERT_EQ(json.size(), 2);
+
+	json.remove("a");
+
+	ASSERT_EQ(json.size(), 1);
+}
+
 TEST_SUIT_END;
 
 
