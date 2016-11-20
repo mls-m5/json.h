@@ -243,8 +243,11 @@ public:
 						case '\\':
 							ret.value += '\\';
 							break;
-						case '\f':
+						case 'f':
 							ret.value += '\f';
+							break;
+						case 'u':
+							ret.value += "\\u";
 							break;
 						default:
 							throw ParsingError("illegal character in string");
