@@ -102,6 +102,10 @@ public:
 		return Json(file);
 	}
 
+	Json &operator[] (int index) {
+		return vector()[index];
+	}
+
 	Json &operator[] (const char *name) {
 		return operator[] (std::string(name));
 	}
@@ -109,7 +113,6 @@ public:
 	Json &operator[] (std::string n) {
 		type = Object; //The operation converts the Json-object to a object
 		value = "";
-		this->name = "";
 		auto f = find(n);
 		if (f != end()) {
 			return *f;
@@ -138,6 +141,12 @@ public:
 			name = json.name;
 		}
 		return *this;
+	}
+
+	Json &operator=(const std::string str) {
+		clear();
+		type = String;
+		value = str;
 	}
 
 	Json& operator=(Json &&json) {
@@ -453,13 +462,20 @@ public:
 				return;
 			}
 			stream << "{\n";
+			bool first = true;
 			for (auto &it: *this) {
+				if (first) {
+					first = false;
+				}
+				else {
+					stream << ",\n";
+				}
 				this->indent(stream, (startIndent + 1) * indent);
 				escapeString(stream, it.name);
 				stream << ": ";
 				it.stringify(stream, indent, startIndent + 1);
-				stream << ",\n";
 			}
+			stream << "\n";
 			this->indent(stream, startIndent * indent);
 			stream << "}";
 		}
@@ -469,11 +485,18 @@ public:
 				return;
 			}
 			stream << "[\n";
-			for (auto &it: *this) {
-				this->indent(stream, (startIndent + 1) * indent);
-				it.stringify(stream, indent, startIndent + 1);
+
+			auto it = begin();
+
+
+			this->indent(stream, (startIndent + 1) * indent);
+			it->stringify(stream, indent, startIndent + 1);
+			for (it = it + 1; it != end(); ++it) {
 				stream << ",\n";
+				this->indent(stream, (startIndent + 1) * indent);
+				it->stringify(stream, indent, startIndent + 1);
 			}
+			stream << "\n";
 			this->indent(stream, startIndent * indent);
 			stream << "]";
 		}
