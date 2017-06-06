@@ -305,6 +305,10 @@ public:
 				throw ParsingError("unexpected token");
 			}
 		}
+		else if(c == -1) {
+			//End of file probably because the file was empty
+			return Token(Token::None);
+		}
 		else{
 			throw "unexpected character";
 		}
