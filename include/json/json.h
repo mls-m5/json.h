@@ -497,9 +497,14 @@ public:
     inline std::string toString() {
         return stringify(2);
     }
-};
 
-std::ostream &operator<<(std::ostream &stream, Json &json) {
-    json.stringify(stream);
-    return stream;
-}
+    friend std::istream &operator>>(std::istream &stream, Json &json) {
+        json.parse(stream);
+        return stream;
+    }
+
+    friend std::ostream &operator<<(std::ostream &stream, Json &json) {
+        json.stringify(stream);
+        return stream;
+    }
+};
