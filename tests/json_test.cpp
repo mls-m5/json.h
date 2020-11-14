@@ -9,6 +9,8 @@
 #include "unittest.h"
 #include "json/json.h"
 
+using namespace std::literals;
+
 TEST_SUIT_BEGIN
 
 TEST_CASE("simple parsing test") {
@@ -50,6 +52,28 @@ TEST_CASE("remove values") {
     json.remove("a");
 
     ASSERT_EQ(json.size(), 1);
+}
+
+TEST_CASE("other test") {
+    auto testJson = R"_(
+            {
+               "palette": {
+                  "hello": "#abcdef",
+                   "aluminium4-3-blend":"#a1a49e",
+                   "aluminium6-5-blend":"#34393A"
+               },
+               "style": {
+                  "standard": "hello"
+               }
+            }
+     )_"s;
+
+    Json json(testJson);
+
+    ASSERT_EQ(json["palette"].type, Json::Object);
+    ASSERT_EQ(json.front().name, "palette");
+    ASSERT_EQ(json["style"].type, Json::Object);
+    ASSERT_EQ(json.back().name, "style");
 }
 
 TEST_SUIT_END;

@@ -288,7 +288,7 @@ public:
                 return Token(Token::Null);
             }
             else {
-                throw ParsingError("unexpected token");
+                throw ParsingError(std::string{"unexpected token: "} + c);
             }
         }
         else if (c == -1) {
@@ -296,7 +296,7 @@ public:
             return Token(Token::None);
         }
         else {
-            throw "unexpected character";
+            throw std::string{"unexpected character: "} + c;
         }
         return Token(Token::None);
     }
@@ -325,7 +325,7 @@ public:
 
             auto token = getNextToken(ss);
 
-            if (token.type == token.EndBracket) {
+            if (token.type == token.EndBrace) {
                 return; // Empty array
             }
 
@@ -338,7 +338,8 @@ public:
 
                 if (token.type != Token::Colon) {
                     throw ParsingError(
-                        "unexpexted token in object, expected ':'");
+                        "unexpexted token in object, expected ':' got " +
+                        token.value);
                 }
 
                 token = getNextToken(ss);
@@ -359,7 +360,8 @@ public:
                     token = getNextToken(ss);
                 }
                 else {
-                    throw ParsingError("unexpected character in array");
+                    throw ParsingError("unexpected character in array: " +
+                                       token.value);
                 }
             }
         }
@@ -395,7 +397,8 @@ public:
                     token = getNextToken(ss);
                 }
                 else {
-                    throw ParsingError("unexpected character in array");
+                    throw ParsingError("unexpected character in array: " +
+                                       token.value);
                 }
             }
         }

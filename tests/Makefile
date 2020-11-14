@@ -1,7 +1,7 @@
 
 
 tests=json_test
-CXXFLAGS=-std=c++11 -g -I../include
+CXXFLAGS=-std=c++17 -g -I../include
 
 all: $(tests)
 
