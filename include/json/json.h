@@ -28,8 +28,19 @@ public:
     std::string name;
     std::string value;
 
+    struct Position {
+        unsigned line = 1;
+        unsigned col = 1;
+
+        operator std::string() {
+            return std::to_string(line) + ": " + std::to_string(col);
+        }
+    };
+
     struct ParsingError : public std::exception {
-        ParsingError(std::string info) : errorString(info) {
+        ParsingError(std::string info, Position position)
+            : errorString(info + " at " + std::string{position}),
+              position(position) {
             what();
         }
 
@@ -38,6 +49,7 @@ public:
         }
 
         std::string errorString;
+        Position position;
     };
 
     class Token {
@@ -186,33 +198,41 @@ public:
         return vector().erase(f);
     }
 
-    static char getChar(std::istream &stream) {
+    static char getChar(std::istream &stream, Position &pos) {
         if (stream.eof()) {
-            throw ParsingError("Unexpected end of file");
+            throw ParsingError("Unexpected end of file ", pos);
         }
-        return stream.get();
+        auto c = stream.get();
+        if (c == '\n') {
+            pos.col = 1;
+            ++pos.line;
+        }
+        else {
+            ++pos.col;
+        }
+        return c;
     }
 
-    static Token getNextToken(std::istream &stream) {
+    static Token getNextToken(std::istream &stream, Position &pos) {
         Token ret;
 
         if (stream.eof()) {
-            throw ParsingError("End of file when expecting character");
+            throw ParsingError("End of file when expecting character", pos);
         }
-        char c = getChar(stream);
+        char c = getChar(stream, pos);
         while (isspace(c)) {
-            c = getChar(stream);
+            c = getChar(stream, pos);
             if (stream.eof()) {
-                throw ParsingError("End of file when expecting character");
+                throw ParsingError("End of file when expecting character", pos);
             }
         }
 
         if (c == '"') {
             ret.type = Token::String;
-            c = getChar(stream);
+            c = getChar(stream, pos);
             while (c != '"') {
                 if (c == '\\') {
-                    c = getChar(stream);
+                    c = getChar(stream, pos);
                     switch (c) {
                     case '"':
                         ret.value += c;
@@ -236,24 +256,24 @@ public:
                         ret.value += "\\u";
                         break;
                     default:
-                        throw ParsingError("illegal character in string");
+                        throw ParsingError("illegal character in string", pos);
                         break;
                     }
                 }
                 else {
                     ret.value += c;
                 }
-                c = getChar(stream);
+                c = getChar(stream, pos);
             }
             return ret;
         }
         if (isdigit(c) || c == '.' || c == '-') {
             ret.value += c;
-            c = getChar(stream);
+            c = getChar(stream, pos);
 
             while (isdigit(c) || c == '.') {
                 ret.value += c;
-                c = getChar(stream);
+                c = getChar(stream, pos);
             }
             stream.unget();
 
@@ -279,8 +299,8 @@ public:
             return Token(Token::Colon);
         }
         else if (c == 'n') {
-            auto assertEq = [](std::istream &s, char c) {
-                char nc = getChar(s);
+            auto assertEq = [&pos](std::istream &s, char c) {
+                char nc = getChar(s, pos);
                 return (nc == c);
             };
             if (assertEq(stream, 'u') && assertEq(stream, 'l') &&
@@ -288,7 +308,7 @@ public:
                 return Token(Token::Null);
             }
             else {
-                throw ParsingError(std::string{"unexpected token: "} + c);
+                throw ParsingError(std::string{"unexpected token: "} + c, pos);
             }
         }
         else if (c == -1) {
@@ -296,7 +316,7 @@ public:
             return Token(Token::None);
         }
         else {
-            throw std::string{"unexpected character: "} + c;
+            throw ParsingError{std::string{"unexpected character: "} + c, pos};
         }
         return Token(Token::None);
     }
@@ -306,10 +326,16 @@ public:
         parse(ss);
     }
 
-    void parse(std::istream &ss, Token rest = Token()) {
+    void parse(std::istream &ss) {
+        Position pos;
+        parse(ss, pos);
+    }
+
+    // Internal parse function
+    void parse(std::istream &ss, Position &pos, Token rest = Token()) {
         Token token = rest;
         if (rest.type == rest.None) {
-            token = getNextToken(ss);
+            token = getNextToken(ss, pos);
             value = "";
         }
         if (token.type == token.String) {
@@ -323,7 +349,7 @@ public:
         else if (token.type == token.BeginBrace) {
             type = Object;
 
-            auto token = getNextToken(ss);
+            auto token = getNextToken(ss, pos);
 
             if (token.type == token.EndBrace) {
                 return; // Empty array
@@ -334,34 +360,35 @@ public:
                 Json json;
                 json.name = token.value;
 
-                token = getNextToken(ss);
+                token = getNextToken(ss, pos);
 
                 if (token.type != Token::Colon) {
                     throw ParsingError(
                         "unexpexted token in object, expected ':' got " +
-                        token.value);
+                            token.value,
+                        pos);
                 }
 
-                token = getNextToken(ss);
+                token = getNextToken(ss, pos);
 
-                json.parse(ss, token);
+                json.parse(ss, pos, token);
                 if (json.type == None) {
-                    throw ParsingError("error in array");
+                    throw ParsingError("error in array", pos);
                 }
 
                 push_back(json);
 
-                token = getNextToken(ss);
+                token = getNextToken(ss, pos);
 
                 if (token.type == token.EndBrace) {
                     return; // End of array
                 }
                 if (token.type == token.Coma) {
-                    token = getNextToken(ss);
+                    token = getNextToken(ss, pos);
                 }
                 else {
-                    throw ParsingError("unexpected character in array: " +
-                                       token.value);
+                    throw ParsingError(
+                        "unexpected character in array: " + token.value, pos);
                 }
             }
         }
@@ -371,7 +398,7 @@ public:
         else if (token.type == token.BeginBracket) {
             type = Array;
 
-            auto token = getNextToken(ss);
+            auto token = getNextToken(ss, pos);
 
             if (token.type == token.EndBracket) {
                 return; // Empty array
@@ -381,24 +408,24 @@ public:
             while (running) {
                 Json json;
 
-                json.parse(ss, token);
+                json.parse(ss, pos, token);
                 if (json.type == None) {
-                    throw ParsingError("error in array");
+                    throw ParsingError{"error in array", pos};
                 }
 
                 push_back(json);
 
-                token = getNextToken(ss);
+                token = getNextToken(ss, pos);
 
                 if (token.type == token.EndBracket) {
                     return; // End of array
                 }
                 if (token.type == token.Coma) {
-                    token = getNextToken(ss);
+                    token = getNextToken(ss, pos);
                 }
                 else {
-                    throw ParsingError("unexpected character in array: " +
-                                       token.value);
+                    throw ParsingError{
+                        "unexpected character in array: " + token.value, pos};
                 }
             }
         }
