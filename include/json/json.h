@@ -44,7 +44,7 @@ public:
             what();
         }
 
-        const char *what() const _GLIBCXX_USE_NOEXCEPT override {
+        const char *what() const noexcept override {
             return errorString.c_str();
         }
 
