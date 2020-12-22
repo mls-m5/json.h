@@ -478,6 +478,9 @@ public:
             case '\n':
                 stream << "\\n";
                 break;
+            case '\r':
+                stream << "\\r";
+                break;
             case '\t':
                 stream << "\\t";
                 break;
@@ -489,6 +492,9 @@ public:
                 break;
             case '"':
                 stream << "\\\"";
+                break;
+            case '\\':
+                stream << "\\\\";
                 break;
             default:
                 stream << c;
