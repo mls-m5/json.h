@@ -122,6 +122,16 @@ public:
         return back();
     }
 
+    const Json &operator[](std::string n) const {
+        auto f = find(n);
+        if (f != end()) {
+            return *f;
+        }
+        else {
+            throw std::out_of_range("could not find " + n + " in json");
+        }
+    }
+
     bool operator==(std::string value) {
         return this->value == value;
     }
@@ -181,6 +191,15 @@ public:
     }
 
     iterator find(std::string name) {
+        for (auto it = begin(); it != end(); ++it) {
+            if ((*it).name == name) {
+                return it;
+            }
+        }
+        return end();
+    }
+
+    const_iterator find(std::string name) const {
         for (auto it = begin(); it != end(); ++it) {
             if ((*it).name == name) {
                 return it;
@@ -441,6 +460,15 @@ public:
         std::ostringstream ss;
         stringify(ss, indent, 0);
         return ss.str();
+    }
+
+    std::string string() const {
+        if (type == String) {
+            return value;
+        }
+        else {
+            throw std::runtime_error("Type in json is not string");
+        }
     }
 
     static void escapeString(std::ostream &stream, std::string str) {
