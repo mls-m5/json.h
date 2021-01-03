@@ -450,7 +450,7 @@ public:
         }
     }
 
-    void indent(std::ostream &stream, int spaces) {
+    void indent(std::ostream &stream, int spaces)const {
         for (int i = 0; i < spaces; ++i) {
             stream << " ";
         }
@@ -503,7 +503,7 @@ public:
         stream << '"';
     }
 
-    void stringify(std::ostream &stream, int indent = 4, int startIndent = 0) {
+    void stringify(std::ostream &stream, int indent = 4, int startIndent = 0) const {
         if (type == Number) {
             stream << value;
         }
@@ -567,7 +567,7 @@ public:
         return stream;
     }
 
-    friend std::ostream &operator<<(std::ostream &stream, Json &json) {
+    friend std::ostream &operator<<(std::ostream &stream, const Json &json) {
         json.stringify(stream);
         return stream;
     }
