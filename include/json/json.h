@@ -35,6 +35,10 @@ public:
         operator std::string() {
             return std::to_string(line) + ": " + std::to_string(col);
         }
+
+        constexpr bool operator==(const Position other) const {
+            return line == other.line && col == other.col;
+        }
     };
 
     struct ParsingError : public std::exception {
@@ -239,6 +243,7 @@ public:
             throw ParsingError("End of file when expecting character", pos);
         }
         char c = getChar(stream, pos);
+
         while (isspace(c)) {
             c = getChar(stream, pos);
             if (stream.eof()) {
@@ -264,6 +269,9 @@ public:
                         break;
                     case 't':
                         ret.value += '\t';
+                        break;
+                    case 'n':
+                        ret.value += '\n';
                         break;
                     case '\\':
                         ret.value += '\\';
@@ -350,9 +358,21 @@ public:
         parse(ss, pos);
     }
 
+    // Remove utf-8 byte order mask
+    static void removeBom(std::istream &stream) {
+        if (stream.peek() == 0xef) {
+            char dummy[3];
+            stream.read(dummy, 3);
+        }
+    }
+
     // Internal parse function
     void parse(std::istream &ss, Position &pos, Token rest = Token()) {
         Token token = rest;
+
+        if (pos == Position{1, 1}) {
+            removeBom(ss);
+        }
         if (rest.type == rest.None) {
             token = getNextToken(ss, pos);
             value = "";
@@ -450,7 +470,7 @@ public:
         }
     }
 
-    void indent(std::ostream &stream, int spaces)const {
+    void indent(std::ostream &stream, int spaces) const {
         for (int i = 0; i < spaces; ++i) {
             stream << " ";
         }
@@ -503,7 +523,9 @@ public:
         stream << '"';
     }
 
-    void stringify(std::ostream &stream, int indent = 4, int startIndent = 0) const {
+    void stringify(std::ostream &stream,
+                   int indent = 4,
+                   int startIndent = 0) const {
         if (type == Number) {
             stream << value;
         }

@@ -76,4 +76,16 @@ TEST_CASE("other test") {
     ASSERT_EQ(json.back().name, "style");
 }
 
+TEST_CASE("special characters") {
+    auto testJson = R"_(
+        {
+            "x": "\"\n\b\r\t\n\\\f\u"
+        }
+    )_"s;
+
+    auto json = Json{testJson};
+
+    (void)json; // The test is not to crash
+}
+
 TEST_SUIT_END;
