@@ -94,6 +94,7 @@ public:
     Json(std::string str) {
         parse(str);
     }
+    Json(Type type) : type(type) {}
     Json(const Json &json) = default;
     Json(Json &&) = default;
     Json(std::istream &stream) {
@@ -489,6 +490,15 @@ public:
         else {
             throw std::runtime_error("Type in json is not string");
         }
+    }
+
+    // Set content o be a string
+    Json &string(std::string value) {
+        clear();
+        name.clear();
+        type = Json::String;
+        this->value = value;
+        return *this;
     }
 
     static void escapeString(std::ostream &stream, std::string str) {
