@@ -16,4 +16,4 @@ jobs:
     - name: make
       run: make
     - name: test
-      run: test/json_test
+      run: tests/json_test
