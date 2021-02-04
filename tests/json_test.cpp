@@ -5,8 +5,7 @@
  *      Author: mattias
  */
 
-#define MATUNIT_DISABLE_ERROR_HANDLING
-#include "unittest.h"
+#include "mls-unit-test/unittest.h"
 #include "json/json.h"
 
 using namespace std::literals;
@@ -86,6 +85,26 @@ TEST_CASE("special characters") {
     auto json = Json{testJson};
 
     (void)json; // The test is not to crash
+}
+
+TEST_CASE("position") {
+    auto testJson = R"_(
+{
+   "x": "hello",
+   "yy": "there"
+}
+    )_";
+
+    auto json = Json{testJson};
+
+    auto x = json["x"];
+    std::cout << "x position " << x.line() << "," << x.col() << std::endl;
+    ASSERT_EQ(x.line(), 3);
+    ASSERT_EQ(x.col(), 16);
+
+    auto yy = json["yy"];
+    ASSERT_EQ(yy.line(), 4);
+    ASSERT_EQ(yy.col(), 17);
 }
 
 TEST_SUIT_END;

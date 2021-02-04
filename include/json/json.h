@@ -24,10 +24,6 @@ public:
         Number,
     };
 
-    Type type = None;
-    std::string name;
-    std::string value;
-
     struct Position {
         unsigned line = 1;
         unsigned col = 1;
@@ -40,6 +36,11 @@ public:
             return line == other.line && col == other.col;
         }
     };
+
+    std::string name;
+    std::string value;
+    Position pos;
+    Type type = None;
 
     struct ParsingError : public std::exception {
         ParsingError(std::string info, Position position)
@@ -148,10 +149,12 @@ public:
             auto n = name; // The name get cleared for some reason
             vector() = json.vector();
             name = n;
+            pos = json.pos;
         }
         else {
             value = json.value;
             name = json.name;
+            pos = json.pos;
         }
         return *this;
     }
@@ -174,7 +177,6 @@ public:
         else
             value = std::move(json.value);
         name = std::move(json.name);
-        {}
         return *this;
     }
 
@@ -377,14 +379,17 @@ public:
         if (rest.type == rest.None) {
             token = getNextToken(ss, pos);
             value = "";
+            this->pos = pos;
         }
         if (token.type == token.String) {
             type = String;
             value = token.value;
+            this->pos = pos;
         }
         else if (token.type == token.Number) {
             type = Number;
             value = token.value;
+            this->pos = pos;
         }
         else if (token.type == token.BeginBrace) {
             type = Object;
@@ -481,6 +486,18 @@ public:
         std::ostringstream ss;
         stringify(ss, indent, 0);
         return ss.str();
+    }
+
+    constexpr size_t line() const {
+        return pos.line;
+    }
+
+    constexpr size_t row() const {
+        return line();
+    }
+
+    constexpr size_t col() {
+        return pos.col;
     }
 
     std::string string() const {
