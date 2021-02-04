@@ -28,7 +28,7 @@ public:
         unsigned line = 1;
         unsigned col = 1;
 
-        operator std::string() {
+        operator std::string() const {
             return std::to_string(line) + ": " + std::to_string(col);
         }
 
