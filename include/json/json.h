@@ -351,14 +351,16 @@ public:
         return Token(Token::None);
     }
 
-    void parse(std::string str) {
+    Json &parse(std::string str) {
         std::istringstream ss(str);
         parse(ss);
+        return *this;
     }
 
-    void parse(std::istream &ss) {
+    Json &parse(std::istream &ss) {
         Position pos;
         parse(ss, pos);
+        return *this;
     }
 
     // Remove utf-8 byte order mask
