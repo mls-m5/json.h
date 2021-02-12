@@ -14,14 +14,14 @@ TEST_SUIT_BEGIN
 
 TEST_CASE("simple parsing test") {
     {
-        Json json("[ 1, 2]");
+        auto json = Json::Parse("[ 1, 2]");
 
         ASSERT_EQ(json.type, json.Array);
         ASSERT_EQ(json.size(), 2);
     }
 
     {
-        Json json("{ \"hej\": 1 }");
+        auto json = Json::Parse("{ \"hej\": 1 }");
 
         ASSERT_EQ(json.type, Json::Object);
         auto res = json[std::string("hej")];
@@ -30,7 +30,7 @@ TEST_CASE("simple parsing test") {
 }
 
 TEST_CASE("dump") {
-    Json json("{\"a\": [1, 1]}");
+    auto json = Json::Parse("{\"a\": [1, 1]}");
 
     std::string outputTarget = "{\n"
                                "  \"a\": [\n"
@@ -43,7 +43,7 @@ TEST_CASE("dump") {
 }
 
 TEST_CASE("remove values") {
-    Json json("{\"a\": null, \"b\": null}");
+    auto json = Json::Parse("{\"a\": null, \"b\": null}");
     ASSERT_EQ(json["a"].type, json.Null);
 
     ASSERT_EQ(json.size(), 2);
@@ -67,7 +67,7 @@ TEST_CASE("other test") {
             }
      )_"s;
 
-    Json json(testJson);
+    auto json = Json::Parse(testJson);
 
     ASSERT_EQ(json["palette"].type, Json::Object);
     ASSERT_EQ(json.front().name, "palette");
@@ -82,7 +82,7 @@ TEST_CASE("special characters") {
         }
     )_"s;
 
-    auto json = Json{testJson};
+    auto json = Json::Parse(testJson);
 
     (void)json; // The test is not to crash
 }
@@ -95,7 +95,7 @@ TEST_CASE("position") {
 }
     )_";
 
-    auto json = Json{testJson};
+    auto json = Json::Parse(testJson);
 
     auto x = json["x"];
     std::cout << "x position " << x.line() << "," << x.col() << std::endl;

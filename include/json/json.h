@@ -93,7 +93,7 @@ public:
 
     Json() = default;
     Json(std::string str) {
-        parse(str);
+        string(str);
     }
     Json(Type type) : type(type) {}
     Json(const Json &json) = default;
@@ -102,7 +102,7 @@ public:
         parse(stream);
     }
 
-    static Json loadFile(std::string fname) {
+    static Json LoadFile(std::string fname) {
         std::ifstream file(fname);
         return Json(file);
     }
@@ -351,6 +351,7 @@ public:
         return Token(Token::None);
     }
 
+    //! Parse and replace this instance
     Json &parse(std::string str) {
         std::istringstream ss(str);
         parse(ss);
@@ -361,6 +362,15 @@ public:
         Position pos;
         parse(ss, pos);
         return *this;
+    }
+
+    //! Create a Json object and return
+    static Json Parse(std::string string) {
+        return Json{}.parse(std::move(string));
+    }
+
+    static Json Parse(std::istream &ss) {
+        return Json{}.parse(ss);
     }
 
     // Remove utf-8 byte order mask
