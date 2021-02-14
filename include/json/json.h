@@ -188,6 +188,30 @@ public:
         return *((std::vector<Json> *)this);
     }
 
+    operator std::vector<std::string>() const {
+        auto ret = std::vector<std::string>{};
+        ret.reserve(size());
+        if (type != Array) {
+            for (auto &it : *this) {
+                ret.push_back(it.string());
+            }
+        }
+
+        return ret;
+    }
+
+    Json &vector(const std::vector<std::string> &value) {
+        clear();
+        reserve(value.size());
+        type = Array;
+
+        for (auto &it : value) {
+            emplace_back(it);
+        }
+
+        return *this;
+    }
+
     operator bool() {
         if (type == None || type == Null || value.empty()) {
             return false;
