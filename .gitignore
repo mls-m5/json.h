@@ -3,5 +3,7 @@
 .settings/
 
 tests/json_test
+examples/*_example
+examples/test-out.json
 *.o
 *.exe
