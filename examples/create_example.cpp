@@ -22,6 +22,8 @@ int main(int, char *[]) {
         child["test1"] = "hello";
         child["test2"] = "hello";
 
+        root["nest"]["really"]["deep"] = "hello";
+
         std::cout << root << "\n";
     }
 

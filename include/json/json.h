@@ -299,7 +299,6 @@ public:
     // Set content o be a string
     Json &string(std::string value) {
         clear();
-        name.clear();
         type = Json::String;
         this->value = value;
         return *this;
