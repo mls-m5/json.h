@@ -1,6 +1,7 @@
 .cproject
 .project
 .settings/
+build/
 
 tests/json_test
 examples/*_example

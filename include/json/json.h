@@ -35,6 +35,7 @@ public:
         Array,
         String,
         Number,
+        Boolean,
     };
 
     //! Create a json object that is of string type
@@ -367,6 +368,8 @@ public:
             Number,
             Coma,
             Colon,
+            BooleanTrue,
+            BooleanFalse,
         };
 
         std::string value;
@@ -481,6 +484,21 @@ inline Json::Token Json::getNextToken(std::istream &stream,
         }
         return ret;
     }
+
+    auto assertEq = [&pos, &stream](char c) {
+        char nc = getChar(stream, pos);
+        return (nc == c);
+    };
+
+    auto assertWord = [&assertEq](std::string_view word) {
+        for (auto c : word) {
+            if (!assertEq(c)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
     if (isdigit(c) || c == '.' || c == '-') {
         ret.value += c;
         c = getChar(stream, pos);
@@ -513,13 +531,26 @@ inline Json::Token Json::getNextToken(std::istream &stream,
         return Token(Token::Colon);
     }
     else if (c == 'n') {
-        auto assertEq = [&pos](std::istream &s, char c) {
-            char nc = getChar(s, pos);
-            return (nc == c);
-        };
-        if (assertEq(stream, 'u') && assertEq(stream, 'l') &&
-            assertEq(stream, 'l')) {
+        if (assertWord("ull")) {
             return Token(Token::Null);
+        }
+        else {
+            throw ParsingError(std::string{"unexpected token: "} + c, pos);
+        }
+    }
+    else if (c == 't') {
+        if (assertWord("rue")) {
+            ret.type = Token::BooleanTrue;
+            return ret;
+        }
+        else {
+            throw ParsingError(std::string{"unexpected token: "} + c, pos);
+        }
+    }
+    else if (c == 'f') {
+        if (assertWord("alse")) {
+            ret.type = Token::BooleanFalse;
+            return ret;
         }
         else {
             throw ParsingError(std::string{"unexpected token: "} + c, pos);
@@ -607,6 +638,14 @@ inline void Json::parse(std::istream &ss,
     else if (token.type == token.Null) {
         type = Null;
     }
+    else if (token.type == token.BooleanTrue) {
+        type = Boolean;
+        value = "true";
+    }
+    else if (token.type == token.BooleanFalse) {
+        type = Boolean;
+        value = "false";
+    }
     else if (token.type == token.BeginBracket) {
         type = Array;
 
@@ -692,6 +731,9 @@ inline void Json::stringify(std::ostream &stream,
     }
     else if (type == Null) {
         stream << "null";
+    }
+    else if (type == Boolean) {
+        stream << value;
     }
     else if (type == Object) {
         if (empty()) {

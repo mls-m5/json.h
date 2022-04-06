@@ -107,4 +107,23 @@ TEST_CASE("position") {
     ASSERT_EQ(yy.col(), 17);
 }
 
+TEST_CASE("booleans") {
+    auto testJson = R"_(
+{
+   "x": true,
+   "yy": false
+}
+    )_";
+
+    auto json = Json::Parse(testJson);
+
+    auto x = json["x"];
+    auto y = json["yy"];
+
+    ASSERT_EQ(x.type, Json::Boolean);
+    ASSERT_EQ(x.value, "true");
+    ASSERT_EQ(y.type, Json::Boolean);
+    ASSERT_EQ(y.value, "false");
+}
+
 TEST_SUIT_END;
