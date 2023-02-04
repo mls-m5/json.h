@@ -42,6 +42,13 @@ TEST_CASE("dump") {
     ASSERT_EQ(json.toString(), outputTarget);
 }
 
+TEST_CASE("numbers") {
+    auto json = Json{10};
+
+    ASSERT_EQ(json.toString(), "10");
+    ASSERT_EQ(json.type, Json::Number);
+}
+
 TEST_CASE("remove values") {
     auto json = Json::Parse("{\"a\": null, \"b\": null}");
     ASSERT_EQ(json["a"].type, json.Null);

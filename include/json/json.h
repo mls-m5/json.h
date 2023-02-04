@@ -44,6 +44,30 @@ public:
         string(str);
     }
 
+    Json(double value) {
+        number(value);
+    }
+
+    Json(float value) {
+        number(value);
+    }
+
+    Json(int value) {
+        number(value);
+    }
+
+    Json(long value) {
+        number(value);
+    }
+
+    Json(long long value) {
+        number(value);
+    }
+
+    Json(size_t value) {
+        number(value);
+    }
+
     //! Create a Json object with a specific type
     Json(Type type) : type(type) {}
 
@@ -90,6 +114,18 @@ public:
     //! Same as load but on
     static Json Parse(std::istream &ss) {
         return Json{}.parse(ss);
+    }
+
+    template <typename T>
+    void set(const T &value) {
+        static_assert("not implemented");
+    }
+
+    template <typename T>
+    Json &number(const T value) {
+        this->value = std::to_string(value);
+        type = Number;
+        return *this;
     }
 
     //! Get child by index
