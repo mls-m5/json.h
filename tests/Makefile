@@ -9,6 +9,6 @@ all: $(tests)
 	g++ $< -o $@ $(CXXFLAGS)
 	
 	
-json_test: json_test.cpp ../include/json/json.h
-	g++ $< -o $@ $(CXXFLAGS)
+json_test: json_test.cpp ../include/json/json.h mls-unit-test/test_main.cpp
+	g++ mls-unit-test/test_main.cpp $< -o $@ $(CXXFLAGS)
 	
