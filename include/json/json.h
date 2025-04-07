@@ -80,6 +80,8 @@ public:
     Json(const Json &json) = default;
     Json(Json &&) = default;
 
+    ~Json() = default;
+
     //! Create a json object from a file and return the new object
     static Json LoadFile(std::string fname) {
         std::ifstream file(fname);
@@ -225,7 +227,8 @@ public:
     }
 
     Json &operator=(const std::string str) {
-        return string(str);
+        string(str);
+        return *this;
     }
 
     //! Get the underlying vector type
@@ -379,9 +382,7 @@ public:
     struct ParsingError : public std::exception {
         ParsingError(std::string info, Position position)
             : errorString(info + " at " + std::string{position}),
-              position(position) {
-            what();
-        }
+              position(position) {}
 
         const char *what() const noexcept override {
             return errorString.c_str();
@@ -410,7 +411,7 @@ public:
 
         std::string value;
         Type type = None;
-        Token(){};
+        Token() {};
         Token(Type type) : type(type) {}
         Token(const Token &) = default;
         Token(Token &&token)
